@@ -1,0 +1,32 @@
+{
+    "name": "abouet/cron-bundle",
+    "description": "Extention of CronBundle",
+    "type": "symfony-bundle",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Antoine BOUET",
+            "email": "antoine@famille-bouet.fr"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "ext-ctype": "*",
+        "cron/cron-bundle": "^2.10",
+        "doctrine/orm": "^2.13",
+        "symfony/framework-bundle": "6.1.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Abouet\\CronBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Abouet\\CronBundle\\Tests\\": "tests/"
+        }
+    }
+}
