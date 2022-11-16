@@ -21,9 +21,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
 
     public function __construct($pattern = null, $start, $end, protected ValidatorInterface $validator) {
         $this->values = new ValueCollection();
-        for ($i = $start;
-                $i <= $end;
-                $i++) {
+        for ($i = $start; $i <= $end; $i++) {
             $this->values->set($i, false);
         }
         $this->setPattern($pattern);
