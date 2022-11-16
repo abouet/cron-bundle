@@ -41,7 +41,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
             if ($this->isRange()) {
                 $this->pattern = implode(self::RANGE_SEPARATOR, $this->getRange());
             }
-            if ($this->isList()) {
+            if ($this->isFrequency()) {
                 $this->pattern .= self::FREQUENCY_TAG . $this->getFrequency();
             }
         }
@@ -51,11 +51,46 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
     public function setPattern(string|null $pattern): void {
         $this->pattern = $this->sanitize($pattern);
         // If empty pattern, no parsing
-        if (null === $pattern) {
+        if (null === $this->pattern) {
             return;
         }
+        // Validate
         $this->validator->validate($this->pattern);
-        $this->parse();
+        // activate all
+        if (self::FULL == $this->pattern) {
+            $this->activateAll();
+            return;
+        }
+        // Parse list : n,n[...]
+        if (str_contains($this->pattern, self::LIST_SEPARATOR)) {
+            $this->setList($this->pattern);
+            return;
+        }
+        /**
+         * Parse frequency and/or range
+         */
+        $this->getValues()->reset();
+        $start = $this->getValues()->first();
+        $end = $this->getValues()->last();
+        $step = 1;
+        // parse frequency : /n
+        $valid = preg_match(FrequencyValidator::PATTERN, $this->pattern, $matches);
+        if (1 == $valid) {
+            $step = $this->sanitize($matches[1]);
+            $this->parsed['frequency'] = $step;
+        }
+        // parse range : n-n
+        $valid = preg_match(RangeValidator::PATTERN, $this->pattern, $matches);
+        if (1 == $valid) {
+            $start = $this->sanitize($matches[1]);
+            $end = $this->sanitize($matches[2]);
+            $this->parsed['range']['start'] = $start;
+            $this->parsed['range']['end'] = $end;
+        }
+        //
+        for ($i = $start; $i <= $end; $i + $step) {
+            $this->activate($i);
+        }
     }
 
     /**
@@ -176,46 +211,6 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
 
     public function isList(): bool {
         return (bool) ($this->parsed['list'] != null);
-    }
-
-    /**
-     * Parsing
-     */
-    protected function parse(): void {
-        // activate all
-        if (self::FULL == $this->pattern) {
-            $this->activateAll();
-            return;
-        }
-        // Parse list : n,n[...]
-        if (str_contains($this->pattern, self::LIST_SEPARATOR,)) {
-            $this->setList($this->pattern);
-            return;
-        }
-        /**
-         * Parse frequency and/or range
-         */
-        $this->getValues()->reset();
-        $start = $this->getValues()->first();
-        $end = $this->getValues()->last();
-        $step = 1;
-        // parse frequency : /n
-        $valid = preg_match(FrequencyValidator::PATTERN, $this->pattern, $matches);
-        if (1 == $valid) {
-            $step = $this->sanitize($matches[1]);
-        }
-        // parse range : n-n
-        $valid = preg_match(RangeValidator::PATTERN, $this->pattern, $matches);
-        if (1 == $valid) {
-            $start = $this->sanitize($matches[1]);
-            $end = $this->sanitize($matches[2]);
-        }
-        //
-        for ($i = $start;
-                $i <= $end;
-                $i + $step) {
-            $this->activate($i);
-        }
     }
 
     /**
