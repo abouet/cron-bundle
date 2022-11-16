@@ -110,6 +110,10 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
         return (self::FULL == $this->pattern);
     }
 
+    private function reset() {
+        $this->parsed = ['list' => null, 'frequency' => null, 'range' => ['start' => null, 'end' => null]];
+    }
+
     /**
      * FREQUENCY
      */
@@ -121,6 +125,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
         $this->pattern = null;
         $this->validateFrequency($frequency);
         // set Frequency
+        $this->reset();
         $this->parsed['frequency'] = $frequency;
         $this->getValues()->reset();
         for ($i = $this->getValues()->first(); $i <= $this->getValues()->last(); $i + $frequency) {
@@ -140,6 +145,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
     public function setBoundFrequency(int $start, int $end, int $frequency): void {
         $this->validateFrequency($frequency);
         $this->validateRange($start, $end);
+        $this->reset();
         $this->parsed['frequency'] = $frequency;
         $this->parsed['range']['start'] = $start;
         $this->parsed['range']['end'] = $end;
@@ -165,6 +171,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
 
     public function setRange(int $start, int $end): void {
         $this->pattern = null;
+        $this->reset();
         $this->parsed['range']['start'] = $start;
         $this->parsed['range']['end'] = $end;
         $this->getValues()->reset();
@@ -200,6 +207,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
         $this->pattern = null;
 
         $validator = new ListValidator();
+        $this->reset();
         if (is_array($list)) {
             $validator->validate(implode(static::LIST_SEPARATOR, $list));
             $this->parsed['list'] = $list;
