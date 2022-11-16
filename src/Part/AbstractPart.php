@@ -33,14 +33,18 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
 
     public function getPattern(): ?string {
         if ($this->isNull()) {
-            if ($this->isList()) {
-                $this->pattern = implode(self::LIST_SEPARATOR, $this->parsed['list']);
-            }
-            if ($this->isRange()) {
-                $this->pattern = implode(self::RANGE_SEPARATOR, $this->getRange());
-            }
-            if ($this->isFrequency()) {
-                $this->pattern .= self::FREQUENCY_TAG . $this->getFrequency();
+            if ($this->isAll()) {
+                $this->pattern = self::FULL; //should not occur, as activateAll() set $this->pattern
+            } elseif ($this->isList()) {
+                $this->pattern = implode(self::LIST_SEPARATOR, $this->getList());
+            } else {
+                $this->pattern = self::FULL;
+                if ($this->isRange()) {
+                    $this->pattern = implode(self::RANGE_SEPARATOR, $this->getRange());
+                }
+                if ($this->isFrequency()) {
+                    $this->pattern .= self::FREQUENCY_TAG . $this->getFrequency();
+                }
             }
         }
         return $this->pattern;
@@ -99,11 +103,11 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
     }
 
     public function isNull(): bool {
-        return (null === $this->getPattern());
+        return (null === $this->pattern);
     }
 
     public function isAll(): bool {
-        return (self::FULL == $this->getPattern());
+        return (self::FULL == $this->pattern);
     }
 
     /**
@@ -261,14 +265,14 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
             $value = $datetime->format(static::FORMAT);
             $next = false;
             // find next execution
-            foreach ($this->getValues()->getFirstActiveValue() as $key => $bool) {
-                if ($key == $value) {
+            foreach ($this->getValues()->getActiveValues() as $key => $bool) {
+                if ($value === $key) {
                     $next = $this->getValues()->getActiveValues()->next();
                     break;
                 }
             }
             // if not an active value
-            if ($next === false) {
+            if (false === $next) {
                 $interval = ($this->getValues()->getMax() - $value) + $this->getValues()->getFirstActiveValue();
             } else {
                 $interval = $next - $value;
@@ -287,7 +291,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
             $value = $datetime->format(static::FORMAT);
             $prev = false;
             // find previous execution
-            foreach ($this->getValues()->getFirstActiveValue() as $key => $bool) {
+            foreach ($this->getValues()->getActiveValues() as $key => $bool) {
                 if ($key == $value) {
                     $prev = prev($this->getValues()->getActiveValues());
                     break;
