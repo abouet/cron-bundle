@@ -51,6 +51,7 @@ abstract class AbstractPart implements CronPartInterface, \Stringable {
     }
 
     public function setPattern(string|null $pattern): void {
+        $this->reset();
         $this->pattern = $this->sanitize($pattern);
         // If empty pattern, no parsing
         if (null === $this->pattern) {
